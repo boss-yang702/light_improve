@@ -1,6 +1,6 @@
 import java.util.*;
 
-class Edge {
+class Edge {//边
     int u, v;
     Edge(int u, int v) {
         this.u = u;
@@ -8,17 +8,17 @@ class Edge {
     }
 }
 
-class Business {
-    int id, s, t, l, c1, c2, p;
+class Business {//业务
+    int id, Src, Snk, S, L, R, V;
     List<Integer> path;
-    Business(int id, int s, int t, int l, int c1, int c2, int p, List<Integer> path) {
+    Business(int id, int Src, int Snk, int S, int L, int R, int V, List<Integer> path) {
         this.id = id;
-        this.s = s;
-        this.t = t;
-        this.l = l;
-        this.c1 = c1;
-        this.c2 = c2;
-        this.p = p;
+        this.Src = Src;
+        this.Snk = Snk;
+        this.S = S;
+        this.L = L;
+        this.R = R;
+        this.V = V;
         this.path = path;
     }
 }
@@ -28,14 +28,14 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
 
         // 读取输入数据
-        int n = scanner.nextInt();
-        int m = scanner.nextInt();
-        int[] maxChangeTimes = new int[n];
+        int n = scanner.nextInt(); // 节点数
+        int m = scanner.nextInt(); // 边数
+        int[] maxChangeTimes = new int[n]; // 每个节点的变通道次数
         for (int i = 0; i < n; i++) {
             maxChangeTimes[i] = scanner.nextInt();
         }
 
-        List<Edge> edges = new ArrayList<>();
+        List<Edge> edges = new ArrayList<>(); // 编号ek表示edges(uk,vk) 0<=ek<=M-1
         for (int i = 0; i < m; i++) {
             int u = scanner.nextInt();
             int v = scanner.nextInt();
@@ -59,38 +59,39 @@ public class Main {
         }
 
         int T = scanner.nextInt();
-        List<List<Integer>> scenarios = new ArrayList<>();
         for (int i = 0; i < T; i++) {
             List<Integer> scenario = new ArrayList<>();
             while (true) {
-                int e = scanner.nextInt();
+                int e = scanner.nextInt(); // 发生中断的边的编号
                 if (e == 0) break;
                 scenario.add(e - 1); // 转换为0开始的编号
+
+                // 在每次读取故障边时，立即重新解析图并重新规划涉及的业务路径并输出结果
+                Set<Integer> brokenEdges = new HashSet<>(scenario);
+                List<List<Integer>> graph = buildGraph(n, edges, brokenEdges);
+                replanBusinesses(graph, businesses);
             }
-            scenarios.add(scenario);
-
-        }
-
-        // 建立图的邻接表
-        List<List<Integer>> graph = new ArrayList<>(n);
-        for (int i = 0; i < n; i++) {
-            graph.add(new ArrayList<>());
-        }
-        for (Edge edge : edges) {
-            graph.get(edge.u).add(edge.v);
-            graph.get(edge.v).add(edge.u);
-        }
-
-        // 处理每个测试场景
-        for (List<Integer> scenario : scenarios) {
-            Set<Integer> brokenEdges = new HashSet<>(scenario);
-            replanBusinesses(graph, edges, businesses, brokenEdges);
         }
 
         scanner.close();
     }
 
-    private static boolean bfsFindPath(List<List<Integer>> graph, int s, int t, List<Integer> path, Set<Integer> brokenEdges) {
+    private static List<List<Integer>> buildGraph(int n, List<Edge> edges, Set<Integer> brokenEdges) {
+        List<List<Integer>> graph = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            graph.add(new ArrayList<>());
+        }
+        for (int i = 0; i < edges.size(); i++) {
+            if (!brokenEdges.contains(i)) {
+                Edge edge = edges.get(i);
+                graph.get(edge.u).add(edge.v);
+                graph.get(edge.v).add(edge.u);
+            }
+        }
+        return graph;
+    }
+
+    private static boolean bfsFindPath(List<List<Integer>> graph, int s, int t, List<Integer> path) {
         Queue<Integer> queue = new LinkedList<>();
         Map<Integer, Integer> prev = new HashMap<>();
         Set<Integer> visited = new HashSet<>();
@@ -113,7 +114,7 @@ public class Main {
             }
 
             for (int v : graph.get(u)) {
-                if (!visited.contains(v) && !brokenEdges.contains(v)) {
+                if (!visited.contains(v)) {
                     queue.add(v);
                     visited.add(v);
                     prev.put(v, u);
@@ -123,13 +124,10 @@ public class Main {
         return false;
     }
 
-    private static void replanBusinesses(List<List<Integer>> graph, List<Edge> edges, List<Business> businesses, Set<Integer> brokenEdges) {
-        List<int[]> replannedBusinesses = new ArrayList<>();
-
+    private static void replanBusinesses(List<List<Integer>> graph, List<Business> businesses) {
         for (Business business : businesses) {
             List<Integer> newPath = new ArrayList<>();
-            if (bfsFindPath(graph, business.s, business.t, newPath, brokenEdges)) {
-                replannedBusinesses.add(new int[]{business.id, newPath.size() - 1});
+            if (bfsFindPath(graph, business.Src, business.Snk, newPath)) {
                 System.out.print(business.id + " " + (newPath.size() - 1));
                 for (int i = 1; i < newPath.size(); i++) {
                     System.out.print(" " + (newPath.get(i - 1) + 1) + " " + (newPath.get(i) + 1));
@@ -139,4 +137,3 @@ public class Main {
         }
     }
 }
-
