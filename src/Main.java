@@ -1,16 +1,18 @@
 import java.util.*;
 
-class Edge {//边
+class Edge {
     int u, v;
+
     Edge(int u, int v) {
         this.u = u;
         this.v = v;
     }
 }
 
-class Business {//业务
+class Business {
     int id, Src, Snk, S, L, R, V;
     List<Integer> path;
+
     Business(int id, int Src, int Snk, int S, int L, int R, int V, List<Integer> path) {
         this.id = id;
         this.Src = Src;
@@ -35,6 +37,7 @@ public class Main {
             maxChangeTimes[i] = scanner.nextInt();
         }
 
+        // 以下的边和业务都是初始场景，再每一个测试场景结束后都要恢复成初始场景
         List<Edge> edges = new ArrayList<>(); // 编号ek表示edges(uk,vk) 0<=ek<=M-1
         for (int i = 0; i < m; i++) {
             int u = scanner.nextInt();
@@ -59,11 +62,14 @@ public class Main {
         }
 
         int T = scanner.nextInt();
+
+        // 处理每一个测试场景
         for (int i = 0; i < T; i++) {
+            // 每个场景开始时，初始化好初始环境
             List<Integer> scenario = new ArrayList<>();
             while (true) {
                 int e = scanner.nextInt(); // 发生中断的边的编号
-                if (e == 0) break;
+                if (e == -1) break; // -1表示该测试场景结束
                 scenario.add(e - 1); // 转换为0开始的编号
 
                 // 在每次读取故障边时，立即重新解析图并重新规划涉及的业务路径并输出结果
@@ -81,8 +87,8 @@ public class Main {
         for (int i = 0; i < n; i++) {
             graph.add(new ArrayList<>());
         }
-        for (int i = 0; i < edges.size(); i++) {
-            if (!brokenEdges.contains(i)) {
+        for (int i = 0; i < edges.size(); i++) { // 用邻接表表示图
+            if (!brokenEdges.contains(i)) { // 好的边添加到邻接表
                 Edge edge = edges.get(i);
                 graph.get(edge.u).add(edge.v);
                 graph.get(edge.v).add(edge.u);
@@ -125,15 +131,25 @@ public class Main {
     }
 
     private static void replanBusinesses(List<List<Integer>> graph, List<Business> businesses) {
+        int R = 0;
+        List<String> output = new ArrayList<>();
+
         for (Business business : businesses) {
             List<Integer> newPath = new ArrayList<>();
             if (bfsFindPath(graph, business.Src, business.Snk, newPath)) {
-                System.out.print(business.id + " " + (newPath.size() - 1));
+                R++;
+                StringBuilder sb = new StringBuilder();
+                sb.append(business.id).append(" ").append(newPath.size() - 1);
                 for (int i = 1; i < newPath.size(); i++) {
-                    System.out.print(" " + (newPath.get(i - 1) + 1) + " " + (newPath.get(i) + 1));
+                    sb.append(" ").append(newPath.get(i - 1) + 1).append(" ").append(newPath.get(i) + 1);
                 }
-                System.out.println();
+                output.add(sb.toString());
             }
+        }
+
+        System.out.println(R);
+        for (String line : output) {
+            System.out.println(line);
         }
     }
 }
